@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>願いを放つ</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; user-select:none; }
+  html, body {
+    width:100%; height:100%; overflow:hidden;
+    background: radial-gradient(ellipse at top, #0b1026 0%, #05060f 70%);
+    font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+    touch-action: none;
+  }
+  #stage { position:relative; width:100%; height:100%; }
+
+  /* 星 */
+  .star {
+    position:absolute; width:2px; height:2px; background:#fff;
+    border-radius:50%; opacity:0.6; animation: twinkle 3s infinite ease-in-out;
+  }
+  @keyframes twinkle { 0%,100%{opacity:.2;} 50%{opacity:.9;} }
+
+  /* 月 */
+  #moon {
+    position:absolute; top:20%; left:32%; transform:translateX(-50%);
+    width:140px; height:140px; border-radius:50%;
+    background: radial-gradient(circle at 35% 35%, #fffdf2 0%, #fdf6e3 40%, #f5e6c8 100%);
+    box-shadow: 0 0 40px 10px rgba(255,250,230,0.5), 0 0 90px 30px rgba(255,200,220,0.15);
+    transition: background 0.6s ease, box-shadow 0.6s ease;
+  }
+
+  canvas#ripple {
+    position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;
+  }
+
+  /* フレーズ */
+  #phrase {
+    position:absolute; top:78%; left:50%; transform:translate(-50%,-50%);
+    color:#fff; font-size:18px; letter-spacing:0.1em;
+    opacity:0; pointer-events:none;
+    text-shadow: 0 0 10px rgba(255,255,255,0.6);
+    transition: opacity 1.2s ease;
+    width:80%; text-align:center;
+  }
+  #phrase.show { opacity:1; }
+
+  /* オーブ：月の右上から曲線状に並ぶ */
+  #orbs {
+    position:absolute; top:0; left:0; width:100%; height:100%;
+  }
+  /* オーブ：月の右上から曲線状に並ぶ */
+  .orb {
+    position:absolute;
+    width:54px; height:54px; border-radius:50%;
+    cursor:grab; touch-action:none;
+    box-shadow: 0 0 20px 6px currentColor;
+    filter: blur(3px);
+    transition: transform 0.15s ease, filter 0.15s ease;
+  }
+  .orb:active { transform: scale(1.1); filter: blur(1px); }
+  .orb1 { top:5%; left:60%; }
+  .orb2 { top:27%; left:74%; }
+  .orb3 { top:50%; left:80%; }
+  .orb4 { top:73%; left:74%; }
+  .orb5 { top:95%; left:60%; }
+  .orb-yellow { background: radial-gradient(circle at 35% 35%, #e6d98f, #b89a1f); color:#b89a1f; }
+  .orb-pink { background: radial-gradient(circle at 35% 35%, #d99fb8, #a8447a); color:#a8447a; }
+  .orb-blue { background: radial-gradient(circle at 35% 35%, #7fa8cc, #285f99); color:#285f99; }
+  .orb-purple { background: radial-gradient(circle at 35% 35%, #a685c2, #6b2fa3); color:#6b2fa3; }
+  .orb-green { background: radial-gradient(circle at 35% 35%, #5f9c75, #134d26); color:#134d26; }
+
+  #hint {
+    position:absolute; bottom:140px; left:0; width:100%; text-align:center;
+    color:rgba(255,255,255,0.5); font-size:12px; letter-spacing:0.1em;
+  }
+
+  @media (max-width: 600px) {
+    #moon { width:112px; height:112px; }
+  }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="ripple"></canvas>
+  <div id="moon"></div>
+  <div id="phrase"></div>
+  <div id="hint">玉を月に向かってフリックしてください</div>
+  <div id="orbs">
+    <div class="orb orb1 orb-yellow" data-color="yellow" data-x="0"></div>
+    <div class="orb orb2 orb-pink" data-color="pink" data-x="0"></div>
+    <div class="orb orb3 orb-blue" data-color="blue" data-x="0"></div>
+    <div class="orb orb4 orb-purple" data-color="purple" data-x="0"></div>
+    <div class="orb orb5 orb-green" data-color="green" data-x="0"></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const stage = document.getElementById('stage');
+  const moon = document.getElementById('moon');
+  const phraseEl = document.getElementById('phrase');
+  const hint = document.getElementById('hint');
+  const canvas = document.getElementById('ripple');
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width = stage.clientWidth;
+    canvas.height = stage.clientHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // 星を散らす
+  for (let i=0;i<60;i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    s.style.left = Math.random()*100+'%';
+    s.style.top = Math.random()*70+'%';
+    s.style.animationDelay = (Math.random()*3)+'s';
+    stage.appendChild(s);
+  }
+
+  const phrases = {
+    yellow: ["軽やかでいい、今日は", "笑っていい、ふいに", "甘さも、ちゃんと自分の一部"],
+    pink: ["そのままのあなたで", "愛していい、自分を", "やさしさは弱さじゃない"],
+    blue: ["もう、大丈夫", "心を、静かに置いていい", "そっと、息をついて"],
+    purple: ["直感を、信じていい", "見えないものにも、意味がある", "静かな閃きを、大切に"],
+    green: ["ここから、芽吹いていい", "焦らなくていい、育つから", "新しい自分へ、ようこそ"]
+  };
+
+  const colorMap = {
+    yellow: { glow:'rgba(255,224,102,', moon:'radial-gradient(circle at 35% 35%, #fffef0, #fff3b3, #ffe066)' },
+    pink: { glow:'rgba(255,143,192,', moon:'radial-gradient(circle at 35% 35%, #fff0f7, #ffc3df, #ff8fc0)' },
+    blue: { glow:'rgba(77,159,255,', moon:'radial-gradient(circle at 35% 35%, #eef8ff, #b3e0ff, #4d9fff)' },
+    purple: { glow:'rgba(168,85,247,', moon:'radial-gradient(circle at 35% 35%, #f6ecff, #d9b3ff, #a855f7)' },
+    green: { glow:'rgba(31,122,63,', moon:'radial-gradient(circle at 35% 35%, #d9f2e0, #6fb98a, #1f7a3f)' }
+  };
+
+  let ripples = [];
+  function spawnRipple(x, y, color) {
+    ripples.push({ x, y, r: 10, alpha: 1, color: colorMap[color].glow });
+  }
+
+  function animate() {
+    ctx.clearRect(0,0,canvas.width, canvas.height);
+    ripples = ripples.filter(rp => rp.alpha > 0.02);
+    ripples.forEach(rp => {
+      ctx.beginPath();
+      ctx.arc(rp.x, rp.y, rp.r, 0, Math.PI*2);
+      ctx.strokeStyle = rp.color + rp.alpha + ')';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      rp.r += 3;
+      rp.alpha *= 0.95;
+    });
+    requestAnimationFrame(animate);
+  }
+  animate();
+
+  function moonHit(color) {
+    const m = colorMap[color];
+    moon.style.background = m.moon;
+    moon.style.boxShadow = `0 0 50px 14px ${m.glow}0.6), 0 0 100px 36px ${m.glow}0.25)`;
+    setTimeout(() => {
+      moon.style.background = '';
+      moon.style.boxShadow = '';
+    }, 1800);
+
+    const rect = moon.getBoundingClientRect();
+    const stageRect = stage.getBoundingClientRect();
+    spawnRipple(rect.left - stageRect.left + rect.width/2, rect.top - stageRect.top + rect.height/2, color);
+
+    const list = phrases[color];
+    const text = list[Math.floor(Math.random()*list.length)];
+    phraseEl.textContent = text;
+    phraseEl.classList.add('show');
+    setTimeout(() => phraseEl.classList.remove('show'), 2200);
+
+    hint.style.opacity = 0;
+  }
+
+  // ドラッグ&フリック処理
+  document.querySelectorAll('.orb').forEach(orb => {
+    let startX, startY, dragging=false;
+    let cloneEl = null;
+
+    function onStart(e) {
+      dragging = true;
+      const pt = e.touches ? e.touches[0] : e;
+      startX = pt.clientX; startY = pt.clientY;
+      orb.style.transition = 'none';
+    }
+
+    function onMove(e) {
+      if (!dragging) return;
+      const pt = e.touches ? e.touches[0] : e;
+      const dx = pt.clientX - startX;
+      const dy = pt.clientY - startY;
+      orb.style.transform = `translate(${dx}px, ${dy}px) scale(1.05)`;
+    }
+
+    function onEnd(e) {
+      if (!dragging) return;
+      dragging = false;
+      orb.style.transition = 'transform 0.5s cubic-bezier(.2,.8,.2,1)';
+
+      const moonRect = moon.getBoundingClientRect();
+      const orbRect = orb.getBoundingClientRect();
+      const dx = (moonRect.left + moonRect.width/2) - (orbRect.left + orbRect.width/2);
+      const dy = (moonRect.top + moonRect.height/2) - (orbRect.top + orbRect.height/2);
+      const dist = Math.sqrt(dx*dx + dy*dy);
+
+      // 月の方向に十分動かしたか（上方向への移動量で判定）
+      const pt = e.changedTouches ? e.changedTouches[0] : e;
+      const movedUp = startY - pt.clientY;
+
+      if (movedUp > 40) {
+        orb.style.transform = `translate(${dx}px, ${dy}px) scale(0.2)`;
+        orb.style.opacity = '0';
+        setTimeout(() => {
+          moonHit(orb.dataset.color);
+          orb.style.transition = 'none';
+          orb.style.transform = '';
+          orb.style.opacity = '1';
+        }, 480);
+      } else {
+        orb.style.transform = '';
+      }
+    }
+
+    orb.addEventListener('mousedown', onStart);
+    orb.addEventListener('touchstart', onStart, {passive:true});
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('touchmove', onMove, {passive:true});
+    window.addEventListener('mouseup', onEnd);
+    window.addEventListener('touchend', onEnd);
+  });
+})();
+</script>
+</body>
+</html>
