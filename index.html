@@ -63,7 +63,7 @@
   .orb2 { top:27%; left:74%; }
   .orb3 { top:50%; left:80%; }
   .orb4 { top:73%; left:74%; }
-  .orb5 { top:91%; left:60%; }
+  .orb5 { top:95%; left:60%; }
   .orb-yellow { background: radial-gradient(circle at 35% 35%, #e6d98f, #b89a1f); color:#b89a1f; }
   .orb-pink { background: radial-gradient(circle at 35% 35%, #d99fb8, #a8447a); color:#a8447a; }
   .orb-blue { background: radial-gradient(circle at 35% 35%, #7fa8cc, #285f99); color:#285f99; }
@@ -211,11 +211,17 @@
       const dy = (moonRect.top + moonRect.height/2) - (orbRect.top + orbRect.height/2);
       const dist = Math.sqrt(dx*dx + dy*dy);
 
-      // 月の方向に十分動かしたか（上方向への移動量で判定）
+      // 月の方向にどれだけ動かしたかで判定（位置に関わらず対応）
       const pt = e.changedTouches ? e.changedTouches[0] : e;
-      const movedUp = startY - pt.clientY;
+      const movedX = pt.clientX - startX;
+      const movedY = pt.clientY - startY;
+      const movedDist = Math.sqrt(movedX*movedX + movedY*movedY);
 
-      if (movedUp > 40) {
+      // 月方向の単位ベクトルとの内積（月に向かう動きかどうか）
+      const toMoonLen = Math.sqrt(dx*dx + dy*dy) || 1;
+      const dot = (movedX * dx + movedY * dy) / toMoonLen;
+
+      if (movedDist > 30 && dot > 20) {
         orb.style.transform = `translate(${dx}px, ${dy}px) scale(0.2)`;
         orb.style.opacity = '0';
         setTimeout(() => {
