@@ -22,26 +22,48 @@
   @keyframes twinkle { 0%,100%{opacity:.2;} 50%{opacity:.9;} }
 
   /* 月 */
-  #moon-wrap {
-    position:absolute; left:32%; transform:translateX(-50%);
-    width:140px; height:140px;
-  }
-  #moon-halo {
-    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-    border-radius:50%; pointer-events:none;
+  #moonHalo {
+    position:absolute; top:20%; left:32%; transform:translate(-50%, -30px);
+    width:260px; height:260px; border-radius:50%;
+    background: radial-gradient(circle,
+      rgba(180,210,255,0.35) 0%,
+      rgba(180,210,255,0.18) 18%,
+      rgba(255,210,170,0.12) 45%,
+      rgba(255,140,120,0.10) 70%,
+      rgba(255,90,90,0) 100%);
+    filter: blur(6px);
+    pointer-events:none;
+    transition: background 0.8s ease;
   }
   #moon {
-    position:relative; width:100%; height:100%; border-radius:50%;
+    position:absolute; top:20%; left:32%; transform:translateX(-50%);
+    width:140px; height:140px; border-radius:50%;
+    background: radial-gradient(circle at 35% 35%, #fffdf2 0%, #fdf6e3 40%, #f5e6c8 100%);
+    box-shadow: 0 0 40px 10px rgba(255,250,230,0.5), 0 0 90px 30px rgba(255,200,220,0.15);
+    transition: box-shadow 0.6s ease;
   }
 
   canvas#ripple {
     position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;
   }
 
+  /* フレーズ */
+  #phrase {
+    position:absolute; top:78%; left:50%; transform:translate(-50%,-50%);
+    color:#fff; font-size:18px; letter-spacing:0.1em;
+    opacity:0; pointer-events:none;
+    text-shadow: 0 0 10px rgba(255,255,255,0.6);
+    transition: opacity 1.2s ease;
+    width:80%; text-align:center;
+  }
+  #phrase.show { opacity:1; }
+
   /* オーブ：月の右上から曲線状に並ぶ */
   #orbs {
     position:absolute; top:0; left:0; width:100%; height:100%;
+    pointer-events:none;
   }
+  #orbs .orb { pointer-events:auto; }
   /* オーブ：月の右上から曲線状に並ぶ */
   .orb {
     position:absolute;
@@ -68,18 +90,91 @@
     color:rgba(255,255,255,0.5); font-size:12px; letter-spacing:0.1em;
   }
 
+  /* ===== サナギ ===== */
+  #cocoon {
+    position:absolute; top:20%; left:32%; transform:translate(-50%,-50%) scale(0);
+    width:90px; height:130px; border-radius:50% 50% 45% 45% / 55% 55% 45% 45%;
+    background: linear-gradient(160deg, #6b4a35 0%, #8a6443 40%, #5a3f2c 100%);
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.4), 0 0 25px rgba(0,0,0,0.3);
+    opacity:0; pointer-events:none;
+    transition: transform 1s cubic-bezier(.2,.8,.2,1), opacity 1s ease;
+    z-index:5;
+  }
+  #cocoon.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
+  #cocoon .crack {
+    position:absolute; left:50%; top:10%; width:2px; height:0%;
+    background: rgba(255,240,220,0.9);
+    box-shadow: 0 0 6px rgba(255,240,220,0.8);
+    transform-origin: top;
+  }
+  #cocoon.crack-1 .crack { transition: height 0.6s ease; height:35%; }
+  #cocoon.crack-2 .crack:nth-child(1) { transition: height 0.5s ease; height:55%; transform: rotate(-8deg); }
+  #cocoon.crack-2 .crack:nth-child(2) { transition: height 0.5s ease; height:45%; transform: rotate(10deg); left:60%; }
+  #cocoon.breaking { transform:translate(-50%,-50%) scale(1.15); opacity:0; transition: transform 0.6s ease, opacity 0.6s ease; }
+
+  /* ===== 蝶 ===== */
+  #butterfly {
+    position:absolute; top:calc(20% - 36px); left:calc(32% - 46px);
+    width:92px; height:72px; transform: scale(0);
+    opacity:0; pointer-events:none; z-index:6;
+  }
+  #butterfly.fly {
+    opacity:1;
+    animation: butterflyPath 4.5s ease-in-out forwards;
+  }
+  #butterfly .wing {
+    position:absolute; top:0; width:46px; height:72px;
+    border-radius:80% 10% 80% 10%;
+    background: radial-gradient(circle at 30% 30%, #ffffff, #dcdcdc);
+    box-shadow: 0 0 18px rgba(255,255,255,0.6);
+    animation: flap 0.35s ease-in-out infinite alternate;
+  }
+  #butterfly .wing.left { left:0; transform-origin: right center; border-radius:10% 80% 10% 80%; }
+  #butterfly .wing.right { right:0; transform-origin: left center; }
+  #butterfly .body {
+    position:absolute; left:50%; top:12px; width:6px; height:48px;
+    background:#3a2a20; border-radius:3px; transform:translateX(-50%);
+  }
+  @keyframes flap {
+    0%   { transform: rotateY(0deg) scale(1); }
+    100% { transform: rotateY(60deg) scale(0.92); }
+  }
+  @keyframes butterflyPath {
+    0%   { transform: scale(0); }
+    8%   { transform: translate(0,0) scale(1); }
+    30%  { transform: translate(-120px,-180px) scale(1); }
+    50%  { transform: translate(60px,-260px) scale(1); }
+    70%  { transform: translate(-40px,-340px) scale(1); }
+    90%  { transform: translate(10px,-380px) scale(0.9); }
+    100% { transform: translate(0px,-400px) scale(0); }
+  }
+
+  /* ===== ローズムーン到達後の演出 ===== */
+  #moon.rose-final {
+    animation: roseFinalPulse 4s ease-in-out infinite;
+  }
+  @keyframes roseFinalPulse {
+    0%,100% { box-shadow: 0 0 50px 16px rgba(255,120,160,0.55), 0 0 110px 40px rgba(255,150,180,0.25); }
+    50%     { box-shadow: 0 0 65px 22px rgba(255,140,180,0.7), 0 0 130px 50px rgba(255,170,200,0.3); }
+  }
+
   @media (max-width: 600px) {
-    #moon-wrap { width:112px; height:112px; }
+    #moon { width:112px; height:112px; }
   }
 </style>
 </head>
 <body>
 <div id="stage">
   <canvas id="ripple"></canvas>
-  <div id="moon-wrap">
-    <div id="moon-halo"></div>
-    <div id="moon"></div>
+  <div id="moonHalo"></div>
+  <div id="moon"></div>
+  <div id="cocoon"><div class="crack"></div><div class="crack"></div></div>
+  <div id="butterfly">
+    <div class="wing left"></div>
+    <div class="wing right"></div>
+    <div class="body"></div>
   </div>
+  <div id="phrase"></div>
   <div id="hint">玉を月に向かってフリックしてください</div>
   <div id="orbs">
     <div class="orb orb1 orb-yellow" data-color="yellow" data-x="0"></div>
@@ -93,10 +188,14 @@
 <script>
 (() => {
   const stage = document.getElementById('stage');
-  const moonWrap = document.getElementById('moon-wrap');
-  const moonHalo = document.getElementById('moon-halo');
   const moon = document.getElementById('moon');
+  const moonEl = moon;
+  const haloEl = document.getElementById('moonHalo');
+  const cocoonEl = document.getElementById('cocoon');
+  const butterflyEl = document.getElementById('butterfly');
+  const phraseEl = document.getElementById('phrase');
   const hint = document.getElementById('hint');
+  let riseRAF = null;
   const canvas = document.getElementById('ripple');
   const ctx = canvas.getContext('2d');
 
@@ -116,6 +215,14 @@
     s.style.animationDelay = (Math.random()*3)+'s';
     stage.appendChild(s);
   }
+
+  const phrases = {
+    yellow: ["軽やかでいい、今日は", "笑っていい、ふいに", "甘さも、ちゃんと自分の一部"],
+    pink: ["そのままのあなたで", "愛していい、自分を", "やさしさは弱さじゃない"],
+    blue: ["もう、大丈夫", "心を、静かに置いていい", "そっと、息をついて"],
+    purple: ["直感を、信じていい", "見えないものにも、意味がある", "静かな閃きを、大切に"],
+    green: ["ここから、芽吹いていい", "焦らなくていい、育つから", "新しい自分へ、ようこそ"]
+  };
 
   const colorMap = {
     yellow: { glow:'rgba(255,224,102,', moon:'radial-gradient(circle at 35% 35%, #fffef0, #fff3b3, #ffe066)' },
@@ -146,92 +253,124 @@
   }
   animate();
 
-  // 大気散乱アニメーション（Rayleigh散乱）
-  const ALT_TOP_LOW = 0.58;
-  const ALT_TOP_HIGH = 0.14;
-  const ATMOSPHERE_CYCLE_MS = 50000;
-
-  let currentAltitude = 0;
-  let atmospherePaused = false;
-  let atmosphereStart = performance.now();
-
-  function lerp(a, b, t) { return a + (b - a) * t; }
-  function lerpRgb(c1, c2, t) {
-    const r = Math.round(lerp(c1[0], c2[0], t));
-    const g = Math.round(lerp(c1[1], c2[1], t));
-    const b = Math.round(lerp(c1[2], c2[2], t));
-    return `rgb(${r},${g},${b})`;
-  }
-
-  const MOON_LOW = [[255,212,160], [232,120,64], [192,64,32]];
-  const MOON_HIGH = [[255,253,242], [240,244,255], [232,238,255]];
-
-  function applyAtmosphere(altitude) {
-    currentAltitude = altitude;
-
-    if (atmospherePaused) return;
-
-    moonWrap.style.top = `${lerp(ALT_TOP_LOW, ALT_TOP_HIGH, altitude) * 100}%`;
-
-    const c0 = lerpRgb(MOON_LOW[0], MOON_HIGH[0], altitude);
-    const c1 = lerpRgb(MOON_LOW[1], MOON_HIGH[1], altitude);
-    const c2 = lerpRgb(MOON_LOW[2], MOON_HIGH[2], altitude);
-    moon.style.background = `radial-gradient(circle at 35% 35%, ${c0} 0%, ${c1} 40%, ${c2} 100%)`;
-
-    const glowR = Math.round(lerp(255, 255, altitude));
-    const glowG = Math.round(lerp(100, 250, altitude));
-    const glowB = Math.round(lerp(40, 240, altitude));
-    const glowA1 = lerp(0.55, 0.4, altitude);
-    const glowSpread1 = lerp(22, 8, altitude);
-    const glowA2 = lerp(0.22, 0.1, altitude);
-    const glowSpread2 = lerp(55, 18, altitude);
-    moon.style.boxShadow =
-      `0 0 ${lerp(65, 38, altitude)}px ${glowSpread1}px rgba(${glowR},${glowG},${glowB},${glowA1}), ` +
-      `0 0 ${lerp(130, 65, altitude)}px ${glowSpread2}px rgba(${glowR},${glowG},${glowB},${glowA2})`;
-
-    const haloSize = lerp(320, 155, altitude);
-    const haloInnerR = Math.round(lerp(255, 255, altitude));
-    const haloInnerG = Math.round(lerp(90, 255, altitude));
-    const haloInnerB = Math.round(lerp(35, 250, altitude));
-    const haloInnerA = lerp(0.55, 0.28, altitude);
-    const haloOuterA = lerp(0.28, 0.08, altitude);
-    const haloBlur = lerp(48, 14, altitude);
-
-    moonHalo.style.width = `${haloSize}px`;
-    moonHalo.style.height = `${haloSize}px`;
-    moonHalo.style.background =
-      `radial-gradient(circle, rgba(${haloInnerR},${haloInnerG},${haloInnerB},${haloInnerA}) 0%, ` +
-      `rgba(${haloInnerR},${haloInnerG},${haloInnerB},${haloOuterA}) 45%, transparent 72%)`;
-    moonHalo.style.filter = `blur(${haloBlur}px)`;
-    moonHalo.style.opacity = String(lerp(0.85, 0.45, altitude));
-  }
-
-  function atmosphereLoop() {
-    const elapsed = (performance.now() - atmosphereStart) % ATMOSPHERE_CYCLE_MS;
-    const altitude = 0.5 - 0.5 * Math.cos(2 * Math.PI * elapsed / ATMOSPHERE_CYCLE_MS);
-    applyAtmosphere(altitude);
-    requestAnimationFrame(atmosphereLoop);
-  }
-  atmosphereLoop();
+  // ===== 変容トラッキング：5色すべて捧げるとサナギ→蝶→ローズムーンへ =====
+  const usedColors = new Set();
+  const colorCount = {};
+  let transformed = false;
 
   function moonHit(color) {
-    atmospherePaused = true;
-    moonHalo.style.opacity = '0';
-    moon.style.transition = 'background 0.6s ease, box-shadow 0.6s ease';
     const m = colorMap[color];
     moon.style.background = m.moon;
     moon.style.boxShadow = `0 0 50px 14px ${m.glow}0.6), 0 0 100px 36px ${m.glow}0.25)`;
     setTimeout(() => {
-      moon.style.transition = 'none';
-      atmospherePaused = false;
-      applyAtmosphere(currentAltitude);
+      if (transformed) return;
+      moon.style.background = '';
+      moon.style.boxShadow = '';
     }, 1800);
 
     const rect = moon.getBoundingClientRect();
     const stageRect = stage.getBoundingClientRect();
     spawnRipple(rect.left - stageRect.left + rect.width/2, rect.top - stageRect.top + rect.height/2, color);
 
+    const list = phrases[color];
+    const text = list[Math.floor(Math.random()*list.length)];
+    phraseEl.textContent = text;
+    phraseEl.classList.add('show');
+    setTimeout(() => phraseEl.classList.remove('show'), 2200);
+
     hint.style.opacity = 0;
+
+    usedColors.add(color);
+    colorCount[color] = (colorCount[color] || 0) + 1;
+
+    if (!transformed && usedColors.size >= 5) {
+      transformed = true;
+      setTimeout(() => beginTransformation(), 1200);
+    }
+  }
+
+  // ===== 月を長押しすると、色を揃えなくても変容シーケンスへ進める =====
+  let pressTimer = null;
+  function startPress() {
+    if (transformed) return;
+    pressTimer = setTimeout(() => {
+      if (!transformed) {
+        transformed = true;
+        beginTransformation();
+      }
+    }, 1500);
+  }
+  function cancelPress() {
+    if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+  }
+  moonEl.addEventListener('mousedown', startPress);
+  moonEl.addEventListener('touchstart', startPress, {passive:true});
+  moonEl.addEventListener('mouseup', cancelPress);
+  moonEl.addEventListener('mouseleave', cancelPress);
+  moonEl.addEventListener('touchend', cancelPress);
+  moonEl.addEventListener('touchcancel', cancelPress);
+  moonEl.style.pointerEvents = 'auto';
+  moonEl.style.cursor = 'pointer';
+
+  function dominantButterflyColor() {
+    // blue/purple系→青い蝶、yellow系→黄色い蝶、それ以外→白い蝶
+    const blueLike = (colorCount.blue || 0) + (colorCount.purple || 0);
+    const yellowLike = colorCount.yellow || 0;
+    if (blueLike >= yellowLike && blueLike > 0) return 'blue';
+    if (yellowLike > 0) return 'yellow';
+    return 'white';
+  }
+
+  const butterflyPalette = {
+    blue:   { wing: 'radial-gradient(circle at 30% 30%, #cfe9ff, #4d9fff)', glow: 'rgba(77,159,255,0.7)' },
+    white:  { wing: 'radial-gradient(circle at 30% 30%, #ffffff, #dcdcdc)', glow: 'rgba(255,255,255,0.7)' },
+    yellow: { wing: 'radial-gradient(circle at 30% 30%, #fffde0, #ffe066)', glow: 'rgba(255,224,102,0.7)' }
+  };
+
+  function beginTransformation() {
+    cancelAnimationFrame(riseRAF);
+
+    // 月とハローをフェードさせサナギを出現
+    moonEl.style.transition = 'opacity 1s ease';
+    haloEl.style.transition = 'opacity 1s ease';
+    moonEl.style.opacity = '0';
+    haloEl.style.opacity = '0';
+
+    setTimeout(() => {
+      cocoonEl.classList.add('show');
+    }, 600);
+
+    // ひびが入る
+    setTimeout(() => cocoonEl.classList.add('crack-1'), 2400);
+    setTimeout(() => cocoonEl.classList.add('crack-2'), 3400);
+
+    // サナギが弾けて蝶が飛び立つ
+    setTimeout(() => {
+      cocoonEl.classList.add('breaking');
+      const bc = dominantButterflyColor();
+      const palette = butterflyPalette[bc];
+      document.querySelectorAll('#butterfly .wing').forEach(w => {
+        w.style.background = palette.wing;
+        w.style.boxShadow = `0 0 10px ${palette.glow}`;
+      });
+      butterflyEl.classList.add('fly');
+    }, 4200);
+
+    // 蝶が舞い終わったらローズムーンとして月を再臨させる
+    setTimeout(() => {
+      moonEl.style.background = 'radial-gradient(circle at 35% 35%, #fff3f7 0%, #ffc9de 45%, #ff8fc0 100%)';
+      moonEl.style.opacity = '1';
+      moonEl.classList.add('rose-final');
+      haloEl.style.background = `radial-gradient(circle,
+        rgba(255,200,225,0.35) 0%,
+        rgba(255,170,205,0.22) 30%,
+        rgba(255,140,180,0.14) 60%,
+        rgba(255,120,160,0) 100%)`;
+      haloEl.style.opacity = '1';
+      phraseEl.textContent = '生まれ変わった、あなたへ';
+      phraseEl.classList.add('show');
+      setTimeout(() => phraseEl.classList.remove('show'), 3000);
+    }, 8800);
   }
 
   // ドラッグ&フリック処理
@@ -296,6 +435,55 @@
     window.addEventListener('mouseup', onEnd);
     window.addEventListener('touchend', onEnd);
   });
+
+  // ===== 月の高度による大気散乱の表現 =====
+  // 月が低い位置（大気を長く通る）ほど赤みが強く、
+  // 高い位置（大気を短く通る）ほど青白く澄んで見える。
+  const LOW_TOP = 46;   // 低い位置（出始め＝赤い）
+  const HIGH_TOP = 14;  // 高い位置（中天＝青白い）
+  let altitude = 0; // 0=低い(赤) → 1=高い(青白)
+  let risingUp = true;
+
+  function applyAtmosphere(t) {
+    const top = LOW_TOP + (HIGH_TOP - LOW_TOP) * t; // tが大きいほど高く
+    moonEl.style.top = top + '%';
+    haloEl.style.top = top + '%';
+
+    // 赤み(散乱の少なさ)とハローの広がりをaltitudeに応じて変化
+    const redStrength = 1 - t; // 低いほど赤が強い
+    haloEl.style.background = `radial-gradient(circle,
+      rgba(${180+60*(1-redStrength)},${210-40*redStrength},255,${0.35-0.1*redStrength}) 0%,
+      rgba(${180+60*(1-redStrength)},${210-50*redStrength},${255-60*redStrength},0.18) 18%,
+      rgba(255,${190-70*redStrength},${170-90*redStrength},${0.10+0.10*redStrength}) 45%,
+      rgba(255,${120-60*redStrength},${110-60*redStrength},${0.08+0.12*redStrength}) 70%,
+      rgba(255,90,90,0) 100%)`;
+
+    // 月本体の色味も低空ほど赤橙、高くなるほど青白く澄む
+    const moonWarm = redStrength;
+    moonEl.style.background = `radial-gradient(circle at 35% 35%,
+      rgba(255,${250-30*moonWarm},${242-90*moonWarm}) 0%,
+      rgba(255,${235-40*moonWarm},${210-110*moonWarm}) 45%,
+      rgba(${245+5*(1-moonWarm)},${210-60*moonWarm},${170-90*moonWarm}) 100%)`;
+  }
+
+  applyAtmosphere(0); // 初期状態：低空・赤み
+
+  // ゆっくり月が昇っていく（約25秒で低→高、また戻る、を繰り返す）
+  const RISE_DURATION = 25000;
+  let riseStart = performance.now();
+  function animateRise(now) {
+    if (transformed) return;
+    let elapsed = (now - riseStart) % (RISE_DURATION * 2);
+    let t;
+    if (elapsed < RISE_DURATION) {
+      t = elapsed / RISE_DURATION; // 0→1 上昇
+    } else {
+      t = 1 - (elapsed - RISE_DURATION) / RISE_DURATION; // 1→0 下降
+    }
+    applyAtmosphere(t);
+    riseRAF = requestAnimationFrame(animateRise);
+  }
+  riseRAF = requestAnimationFrame(animateRise);
 })();
 </script>
 </body>
