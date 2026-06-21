@@ -38,17 +38,6 @@
     position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;
   }
 
-  /* フレーズ */
-  #phrase {
-    position:absolute; top:78%; left:50%; transform:translate(-50%,-50%);
-    color:#fff; font-size:18px; letter-spacing:0.1em;
-    opacity:0; pointer-events:none;
-    text-shadow: 0 0 10px rgba(255,255,255,0.6);
-    transition: opacity 1.2s ease;
-    width:80%; text-align:center;
-  }
-  #phrase.show { opacity:1; }
-
   /* オーブ：月の右上から曲線状に並ぶ */
   #orbs {
     position:absolute; top:0; left:0; width:100%; height:100%;
@@ -91,7 +80,6 @@
     <div id="moon-halo"></div>
     <div id="moon"></div>
   </div>
-  <div id="phrase"></div>
   <div id="hint">玉を月に向かってフリックしてください</div>
   <div id="orbs">
     <div class="orb orb1 orb-yellow" data-color="yellow" data-x="0"></div>
@@ -108,7 +96,6 @@
   const moonWrap = document.getElementById('moon-wrap');
   const moonHalo = document.getElementById('moon-halo');
   const moon = document.getElementById('moon');
-  const phraseEl = document.getElementById('phrase');
   const hint = document.getElementById('hint');
   const canvas = document.getElementById('ripple');
   const ctx = canvas.getContext('2d');
@@ -129,14 +116,6 @@
     s.style.animationDelay = (Math.random()*3)+'s';
     stage.appendChild(s);
   }
-
-  const phrases = {
-    yellow: ["軽やかでいい、今日は", "笑っていい、ふいに", "甘さも、ちゃんと自分の一部"],
-    pink: ["そのままのあなたで", "愛していい、自分を", "やさしさは弱さじゃない"],
-    blue: ["もう、大丈夫", "心を、静かに置いていい", "そっと、息をついて"],
-    purple: ["直感を、信じていい", "見えないものにも、意味がある", "静かな閃きを、大切に"],
-    green: ["ここから、芽吹いていい", "焦らなくていい、育つから", "新しい自分へ、ようこそ"]
-  };
 
   const colorMap = {
     yellow: { glow:'rgba(255,224,102,', moon:'radial-gradient(circle at 35% 35%, #fffef0, #fff3b3, #ffe066)' },
@@ -251,12 +230,6 @@
     const rect = moon.getBoundingClientRect();
     const stageRect = stage.getBoundingClientRect();
     spawnRipple(rect.left - stageRect.left + rect.width/2, rect.top - stageRect.top + rect.height/2, color);
-
-    const list = phrases[color];
-    const text = list[Math.floor(Math.random()*list.length)];
-    phraseEl.textContent = text;
-    phraseEl.classList.add('show');
-    setTimeout(() => phraseEl.classList.remove('show'), 2200);
 
     hint.style.opacity = 0;
   }
