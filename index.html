@@ -22,12 +22,16 @@
   @keyframes twinkle { 0%,100%{opacity:.2;} 50%{opacity:.9;} }
 
   /* 月 */
+  #moon-wrap {
+    position:absolute; left:32%; transform:translateX(-50%);
+    width:140px; height:140px;
+  }
+  #moon-halo {
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    border-radius:50%; pointer-events:none;
+  }
   #moon {
-    position:absolute; top:20%; left:32%; transform:translateX(-50%);
-    width:140px; height:140px; border-radius:50%;
-    background: radial-gradient(circle at 35% 35%, #fffdf2 0%, #fdf6e3 40%, #f5e6c8 100%);
-    box-shadow: 0 0 40px 10px rgba(255,250,230,0.5), 0 0 90px 30px rgba(255,200,220,0.15);
-    transition: background 0.6s ease, box-shadow 0.6s ease;
+    position:relative; width:100%; height:100%; border-radius:50%;
   }
 
   canvas#ripple {
@@ -76,14 +80,17 @@
   }
 
   @media (max-width: 600px) {
-    #moon { width:112px; height:112px; }
+    #moon-wrap { width:112px; height:112px; }
   }
 </style>
 </head>
 <body>
 <div id="stage">
   <canvas id="ripple"></canvas>
-  <div id="moon"></div>
+  <div id="moon-wrap">
+    <div id="moon-halo"></div>
+    <div id="moon"></div>
+  </div>
   <div id="phrase"></div>
   <div id="hint">玉を月に向かってフリックしてください</div>
   <div id="orbs">
@@ -98,6 +105,8 @@
 <script>
 (() => {
   const stage = document.getElementById('stage');
+  const moonWrap = document.getElementById('moon-wrap');
+  const moonHalo = document.getElementById('moon-halo');
   const moon = document.getElementById('moon');
   const phraseEl = document.getElementById('phrase');
   const hint = document.getElementById('hint');
@@ -158,13 +167,85 @@
   }
   animate();
 
+  // 大気散乱アニメーション（Rayleigh散乱）
+  const ALT_TOP_LOW = 0.58;
+  const ALT_TOP_HIGH = 0.14;
+  const ATMOSPHERE_CYCLE_MS = 25000;
+
+  let currentAltitude = 0;
+  let atmospherePaused = false;
+  let atmosphereStart = performance.now();
+
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function lerpRgb(c1, c2, t) {
+    const r = Math.round(lerp(c1[0], c2[0], t));
+    const g = Math.round(lerp(c1[1], c2[1], t));
+    const b = Math.round(lerp(c1[2], c2[2], t));
+    return `rgb(${r},${g},${b})`;
+  }
+
+  const MOON_LOW = [[255,212,160], [232,120,64], [192,64,32]];
+  const MOON_HIGH = [[255,253,242], [240,244,255], [232,238,255]];
+
+  function applyAtmosphere(altitude) {
+    currentAltitude = altitude;
+
+    if (atmospherePaused) return;
+
+    moonWrap.style.top = `${lerp(ALT_TOP_LOW, ALT_TOP_HIGH, altitude) * 100}%`;
+
+    const c0 = lerpRgb(MOON_LOW[0], MOON_HIGH[0], altitude);
+    const c1 = lerpRgb(MOON_LOW[1], MOON_HIGH[1], altitude);
+    const c2 = lerpRgb(MOON_LOW[2], MOON_HIGH[2], altitude);
+    moon.style.background = `radial-gradient(circle at 35% 35%, ${c0} 0%, ${c1} 40%, ${c2} 100%)`;
+
+    const glowR = Math.round(lerp(255, 255, altitude));
+    const glowG = Math.round(lerp(100, 250, altitude));
+    const glowB = Math.round(lerp(40, 240, altitude));
+    const glowA1 = lerp(0.55, 0.4, altitude);
+    const glowSpread1 = lerp(22, 8, altitude);
+    const glowA2 = lerp(0.22, 0.1, altitude);
+    const glowSpread2 = lerp(55, 18, altitude);
+    moon.style.boxShadow =
+      `0 0 ${lerp(65, 38, altitude)}px ${glowSpread1}px rgba(${glowR},${glowG},${glowB},${glowA1}), ` +
+      `0 0 ${lerp(130, 65, altitude)}px ${glowSpread2}px rgba(${glowR},${glowG},${glowB},${glowA2})`;
+
+    const haloSize = lerp(320, 155, altitude);
+    const haloInnerR = Math.round(lerp(255, 255, altitude));
+    const haloInnerG = Math.round(lerp(90, 255, altitude));
+    const haloInnerB = Math.round(lerp(35, 250, altitude));
+    const haloInnerA = lerp(0.55, 0.28, altitude);
+    const haloOuterA = lerp(0.28, 0.08, altitude);
+    const haloBlur = lerp(48, 14, altitude);
+
+    moonHalo.style.width = `${haloSize}px`;
+    moonHalo.style.height = `${haloSize}px`;
+    moonHalo.style.background =
+      `radial-gradient(circle, rgba(${haloInnerR},${haloInnerG},${haloInnerB},${haloInnerA}) 0%, ` +
+      `rgba(${haloInnerR},${haloInnerG},${haloInnerB},${haloOuterA}) 45%, transparent 72%)`;
+    moonHalo.style.filter = `blur(${haloBlur}px)`;
+    moonHalo.style.opacity = String(lerp(0.85, 0.45, altitude));
+  }
+
+  function atmosphereLoop() {
+    const elapsed = (performance.now() - atmosphereStart) % ATMOSPHERE_CYCLE_MS;
+    const altitude = 0.5 - 0.5 * Math.cos(2 * Math.PI * elapsed / ATMOSPHERE_CYCLE_MS);
+    applyAtmosphere(altitude);
+    requestAnimationFrame(atmosphereLoop);
+  }
+  atmosphereLoop();
+
   function moonHit(color) {
+    atmospherePaused = true;
+    moonHalo.style.opacity = '0';
+    moon.style.transition = 'background 0.6s ease, box-shadow 0.6s ease';
     const m = colorMap[color];
     moon.style.background = m.moon;
     moon.style.boxShadow = `0 0 50px 14px ${m.glow}0.6), 0 0 100px 36px ${m.glow}0.25)`;
     setTimeout(() => {
-      moon.style.background = '';
-      moon.style.boxShadow = '';
+      moon.style.transition = 'none';
+      atmospherePaused = false;
+      applyAtmosphere(currentAltitude);
     }, 1800);
 
     const rect = moon.getBoundingClientRect();
