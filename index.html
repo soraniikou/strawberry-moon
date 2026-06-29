@@ -235,8 +235,8 @@ function drawMoon(t) {
   // Moon body gradient
   const moonGrd = ctx.createRadialGradient(cx - R*0.2, cy - R*0.2, R*0.1, cx, cy, R);
   moonGrd.addColorStop(0, s.moonColor[0]);
-  moonGrd.addColorStop(0.6, s.moonColor[1]);
-  moonGrd.addColorStop(1, '#1a0800');
+  moonGrd.addColorStop(0.7, s.moonColor[1]);
+  moonGrd.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.beginPath();
   ctx.arc(cx, cy, R, 0, Math.PI * 2);
   ctx.fillStyle = moonGrd;
