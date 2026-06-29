@@ -1,1 +1,3 @@
-<img src="strawberry%20moon.png" width="31%" alt="strawberry-moon"> <img src="bloom%20again.png" width="31%" alt="bloom-again"> <img src="mederu.png" width="31%" alt="mederu">
+<img src="strawberry.png" width="100%" alt="strawberry">
+
+<img src="スクリーンショット%202026-06-29%20165825.png" width="100%" alt="screenshot-latest">
